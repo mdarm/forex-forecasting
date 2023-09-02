@@ -1,4 +1,4 @@
-# Forex Forecasting using PyTorch Forecasting
+# Forex Forecasting using Neural Networks 
 
 ## Purpose
 
@@ -10,7 +10,6 @@ The data is sourced from the European Central Bank and can be downloaded using t
 
 ## Models
 
-All models available in the PyTorch Forecasting library will be used for forecasting.
 
 ## Steps
 
@@ -25,3 +24,14 @@ Install the requirements by simpy typing:
 ```bash
 pip install -r requirements.txt
 ```
+
+## Authors
+
+* **Darmanis Michael** - [mdarm](https://github.com/mdarm)
+* **Efstathios Kotsis** - [staks1](https://github.com/staks1)
+* **Vasilis Venieris** - [vasilisvenieris](https://github.com/vasilisvenieris)
+
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
