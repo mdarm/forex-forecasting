@@ -14,20 +14,16 @@ def clean_data(csv_file_path, cleaned_csv_file_path):
     df['Date'] = pd.to_datetime(df['Date'])
     df         = df.sort_values('Date')
 
-    # Find columns that have NaN values
     drop_columns = []
     for col in df.columns:
         if df[col].isna().any():
             drop_columns.append(col)
 
-    # Drop the identified columns from the DataFrame
     df.drop(columns=drop_columns, inplace=True)
 
-    # Identify the common time period for all remaining currencies
     min_year = df['Date'].dt.year.min()
     max_year = df['Date'].dt.year.max()
 
-    # Trim the DataFrame to only include the common time period
     df = df[(df['Date'].dt.year >= min_year) & (df['Date'].dt.year <= max_year)]
     df.to_csv(cleaned_csv_file_path, index=False)
 
@@ -49,11 +45,11 @@ def resample_data(input_csv_path, output_folder):
     
     # Resampling frequencies
     frequencies = {
-        'daily': 'D',
-        'weekly': 'W',
-        'monthly': 'M',
+        'daily':     'D',
+        'weekly':    'W',
+        'monthly':   'M',
         'quarterly': 'Q',
-        'yearly': 'Y'
+        'yearly':    'Y'
     }
     
     # Create the output folder if it does not exist

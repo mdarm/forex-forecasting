@@ -5,13 +5,12 @@ from process_data import clean_data, resample_data
 
 
 def create_raw_dataset():
-    zip_url = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip?1f54ac4889a7e6d01b17d729b1c02549"
+    zip_url       = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip?1f54ac4889a7e6d01b17d729b1c02549"
     zip_path      = "eurofxref-hist.zip"
     unzip_dir     = "../dataset"
     original_name = "eurofxref-hist.csv"
     new_name      = "raw_dataset.csv"
     
-    # Create the directory if it does not exist
     if not os.path.exists(unzip_dir):
         os.makedirs(unzip_dir)
 
@@ -29,7 +28,6 @@ def process_dataset():
     new_name              = "processed_dataset.csv"
     cleaned_csv_file_path = os.path.join(unzip_dir, new_name)
 
-    # Clean the data
     clean_data(os.path.join(unzip_dir, old_name),
                             cleaned_csv_file_path)
         

@@ -2,6 +2,7 @@ import os
 import requests
 import zipfile
 
+
 def download_zip(url, save_path):
     """
     Downloads a zip file from a given URL and saves it locally.
