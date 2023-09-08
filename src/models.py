@@ -8,6 +8,7 @@ import torch.nn as nn
 import pandas as pd
 from tqdm import tqdm
 
+
 class holt_winters_no_trend(torch.nn.Module):
     
     def __init__(self,init_a=0.1,init_g=0.1,slen=12):
@@ -136,4 +137,3 @@ class es_rnn(torch.nn.Module):
         #in the end we multiply it all together and we are done!
         #here additive seems to work a bit better, need to make that an if/else of the model
         return smoothed_value[:,-1].unsqueeze(1)+season_forecast+pred
-       

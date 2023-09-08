@@ -1,4 +1,4 @@
-#Dataset with random shuffeling: We have to check, that seasonality gets shifted apropriatly 
+# check whether seasonality gets shifted apropriatly 
 
 import numpy as np 
 import pandas as pd
@@ -28,7 +28,7 @@ class sequence_labeling_dataset(Dataset):
         
         data_i=self.data
         
-        #we randomly shift the inputs to create more data
+        #randomly shift the inputs to create more data
         if len(data_i)>self.max_size:
             max_rand_int=len(data_i)-self.max_size
             #take a random start integer
@@ -42,14 +42,14 @@ class sequence_labeling_dataset(Dataset):
         
         
         if self.sequence_labeling==True:
-            #in case of sequence labeling, we shift the input by the range to output
+            #in case of sequence labeling, shift the input by the range to output
             out=np.array(data_i[self.out_preds:])
         else:
-            #in case of sequnec classification we return only the last n elements we
-            #need in the forecast
+            #in case of sequnec classification return only the last n elements
+            #needed in the forecast
             out=np.array(data_i[-self.out_preds:])
             
-        #This defines, how much we have to shift the season 
+        #how much to shift the season 
         shift_steps=start_int%self.seasonality
         
         return inp, out,shift_steps
