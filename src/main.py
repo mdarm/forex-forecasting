@@ -16,7 +16,7 @@ from fetch_data import download_zip, unzip_and_rename
 from process_data import clean_data, resample_data
 
 from utils import *
-from models import es_rnn,holt_winters_no_trend
+from models import es_rnn, holt_winters_no_trend
 
 
 def create_raw_dataset():
@@ -127,8 +127,14 @@ def playing_around():
         overall_loss.append(np.mean(loss_list_b))
         overall_loss_train.append(np.mean(train_loss_list_b))
 
-        #Forecasting on the Validation set
+        # Plot of Train and Validation Loss, we nicely converge
+        plt.plot(overall_loss, "g", label="Validation Loss")
+        plt.plot(overall_loss_train, "r", label="Training Loss")
+        plt.legend()
+        plt.savefig("../outputs/training-loss.png")
+        plt.close()
 
+        #Forecasting on the Validation set
         batch=next(iter(test_dl))
         inp=batch[0].float().to(device)#.unsqueeze(2)
         out=batch[1].float().to(device)#.unsqueeze(2).float()
@@ -136,7 +142,6 @@ def playing_around():
         pred=hw(torch.cat([inp,out],dim=1),shifts)
 
         #plt.plot(torch.cat([inp,out,pred],dim=1)[0].detach().numpy(),"r")
-
 
         plt.plot(torch.cat([inp[0],out[0,:]]).cpu().detach().numpy(),"g")
         plt.plot(torch.cat([inp[0],pred[0,:]]).cpu().detach().numpy(),"r")
@@ -154,6 +159,7 @@ def playing_around():
         plt.plot(torch.cat([inp,out,pred],dim=1)[0].cpu().detach().numpy(),"g")
         plt.savefig("../outputs/forecasting.png")
         plt.close()     
+
 
 if __name__ == "__main__":
     create_raw_dataset()
