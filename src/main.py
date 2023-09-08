@@ -1,7 +1,22 @@
 import os
 import sys
+
+import numpy as np 
+import pandas as pd
+
+import matplotlib.pyplot as plt
+
+import random
+from torch.utils.data import Dataset,sampler,DataLoader
+import torch
+import torch.nn as nn
+from tqdm import tqdm
+
 from fetch_data import download_zip, unzip_and_rename
 from process_data import clean_data, resample_data
+
+from utils import *
+from models import es_rnn,holt_winters_no_trend
 
 
 def create_raw_dataset():
@@ -39,7 +54,109 @@ def resample_dataset():
     resample_data(processed_csv_path, ouput_path)
 
 
+def playing_around():
+    df = pd.read_csv("../dataset/quarterly.csv")
+    usd_list = df['USD'].tolist()
+    train = usd_list[:-12]
+    test = usd_list
+
+    sl=sequence_labeling_dataset(train,len(train),False)
+    sl_t=sequence_labeling_dataset(test,len(test),False)
+
+    train_dl = DataLoader(dataset=sl,
+                          batch_size=512,
+                          shuffle=False)
+
+    test_dl = DataLoader(dataset=sl_t,
+                         batch_size=512,
+                         shuffle=False)
+
+    hw = es_rnn()
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    hw = hw.to(device)
+    opti = torch.optim.Adam(hw.parameters(), lr=0.01)#,weight_decay=0.0001
+
+    #Initial Prediction 
+    overall_loss = []
+    batch=next(iter(test_dl))
+    inp=batch[0].float().to(device)#.unsqueeze(2)
+    out=batch[1].float().to(device)#.unsqueeze(2).float()
+    shifts=batch[2].numpy()
+    pred=hw(inp, shifts)
+
+    plt.plot(torch.cat([inp[0],out[0,:]]).cpu().numpy(),"g")
+    plt.plot(torch.cat([inp[0],pred[0,:]]).cpu().detach().numpy(),"r")
+    plt.savefig("../outputs/initial-prediction.png")
+    plt.close()
+
+    overall_loss_train=[]
+    overall_loss=[]
+    for j in tqdm(range(20)):
+        loss_list_b=[]
+        train_loss_list_b=[]
+        #here we use batches of past, and to be forecasted value
+        #batches are determined by a random start integer
+        for batch in iter(train_dl):
+
+            opti.zero_grad()
+            inp=batch[0].float().to(device)#.unsqueeze(2)
+            out=batch[1].float().to(device)#.unsqueeze(2).float()
+            shifts=batch[2].numpy()
+            #it returns the whole sequence atm 
+            pred=hw(inp,shifts)
+            loss=(torch.mean((pred-out)**2))**(1/2)
+            train_loss_list_b.append(loss.detach().cpu().numpy())
+            
+            loss.backward()
+            opti.step()
+
+
+        #here we use all the available values to forecast the future ones and eval on it
+        for batch in iter(test_dl):
+            inp=batch[0].float().to(device)#.unsqueeze(2)
+            out=batch[1].float().to(device)#.unsqueeze(2).float()
+            shifts=batch[2].numpy()
+            pred=hw(inp,shifts)
+            #loss=torch.mean(torch.abs(pred-out))
+            loss=(torch.mean((pred-out)**2))**(1/2)
+            loss_list_b.append(loss.detach().cpu().numpy())
+        
+     
+        print(np.mean(loss_list_b))
+        print(np.mean(train_loss_list_b))
+        overall_loss.append(np.mean(loss_list_b))
+        overall_loss_train.append(np.mean(train_loss_list_b))
+
+        #Forecasting on the Validation set
+
+        batch=next(iter(test_dl))
+        inp=batch[0].float().to(device)#.unsqueeze(2)
+        out=batch[1].float().to(device)#.unsqueeze(2).float()
+        shifts=batch[2].numpy()
+        pred=hw(torch.cat([inp,out],dim=1),shifts)
+
+        #plt.plot(torch.cat([inp,out,pred],dim=1)[0].detach().numpy(),"r")
+
+
+        plt.plot(torch.cat([inp[0],out[0,:]]).cpu().detach().numpy(),"g")
+        plt.plot(torch.cat([inp[0],pred[0,:]]).cpu().detach().numpy(),"r")
+        plt.savefig("../outputs/validation-forecasting.png")
+        plt.close()
+
+        #Forecasting on a 12 period horizon
+        batch=next(iter(test_dl))
+        inp=batch[0].float().to(device)#.unsqueeze(2)
+        out=batch[1].float().to(device)#.unsqueeze(2).float()
+        shifts=batch[2].numpy()
+
+        pred=hw(torch.cat([inp,out],dim=1),shifts)
+        plt.plot(torch.cat([inp,out],dim=1)[0].cpu().detach().numpy(),"b")
+        plt.plot(torch.cat([inp,out,pred],dim=1)[0].cpu().detach().numpy(),"g")
+        plt.savefig("../outputs/forecasting.png")
+        plt.close()     
+
 if __name__ == "__main__":
     create_raw_dataset()
     process_dataset()
     resample_dataset()
+    playing_around()
