@@ -16,7 +16,8 @@ from fetch_data import download_zip, unzip_and_rename
 from process_data import clean_data, resample_data
 
 from utils import *
-from models import es_rnn, holt_winters_no_trend
+from models import *
+from evaluation_metrics import *
 
 
 def create_raw_dataset():
@@ -57,11 +58,11 @@ def resample_dataset():
 def playing_around():
     df = pd.read_csv("../dataset/quarterly.csv")
     usd_list = df['USD'].tolist()
-    train = usd_list[:-12]
+    train = usd_list[:-8]
     test = usd_list
 
-    sl=sequence_labeling_dataset(train,len(train),False)
-    sl_t=sequence_labeling_dataset(test,len(test),False)
+    sl=SequenceLabelingDataset(train,len(train),False, out_preds=8)
+    sl_t=SequenceLabelingDataset(test,len(test),False, out_preds=8)
 
     train_dl = DataLoader(dataset=sl,
                           batch_size=512,
@@ -71,7 +72,7 @@ def playing_around():
                          batch_size=512,
                          shuffle=False)
 
-    hw = es_rnn()
+    hw = ESRNN(slen=4, pred_len=8)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     hw = hw.to(device)
     opti = torch.optim.Adam(hw.parameters(), lr=0.01)#,weight_decay=0.0001
@@ -81,11 +82,13 @@ def playing_around():
     batch=next(iter(test_dl))
     inp=batch[0].float().to(device)#.unsqueeze(2)
     out=batch[1].float().to(device)#.unsqueeze(2).float()
+    print(inp.size(), out.size())
     shifts=batch[2].numpy()
     pred=hw(inp, shifts)
 
-    plt.plot(torch.cat([inp[0],out[0,:]]).cpu().numpy(),"g")
-    plt.plot(torch.cat([inp[0],pred[0,:]]).cpu().detach().numpy(),"r")
+    plt.plot(torch.cat([inp[0],out[0,:]]).cpu().numpy(),"g",label="Original")
+    plt.plot(torch.cat([inp[0],pred[0,:]]).cpu().detach().numpy(),"r",label="Prediction")
+    plt.legend()
     plt.savefig("../outputs/initial-prediction.png")
     plt.close()
 
@@ -104,7 +107,8 @@ def playing_around():
             shifts=batch[2].numpy()
             #it returns the whole sequence atm 
             pred=hw(inp,shifts)
-            loss=(torch.mean((pred-out)**2))**(1/2)
+            #loss=(torch.mean((pred-out)**2))**(1/2)
+            loss = hybrid_loss(inp, pred, out)
             train_loss_list_b.append(loss.detach().cpu().numpy())
             
             loss.backward()
@@ -118,7 +122,8 @@ def playing_around():
             shifts=batch[2].numpy()
             pred=hw(inp,shifts)
             #loss=torch.mean(torch.abs(pred-out))
-            loss=(torch.mean((pred-out)**2))**(1/2)
+            loss=hybrid_loss(inp, pred, out)
+            #loss=(torch.mean((pred-out)**2))**(1/2)
             loss_list_b.append(loss.detach().cpu().numpy())
         
      
@@ -143,8 +148,10 @@ def playing_around():
 
         #plt.plot(torch.cat([inp,out,pred],dim=1)[0].detach().numpy(),"r")
 
-        plt.plot(torch.cat([inp[0],out[0,:]]).cpu().detach().numpy(),"g")
-        plt.plot(torch.cat([inp[0],pred[0,:]]).cpu().detach().numpy(),"r")
+        plt.plot(torch.cat([inp[0],out[0,:]]).cpu().detach().numpy(),"g",label="Original")
+        plt.plot(torch.cat([inp[0],pred[0,:]]).cpu().detach().numpy(),"r",label="Prediction")
+        plt.legend()
+
         plt.savefig("../outputs/validation-forecasting.png")
         plt.close()
 
@@ -155,8 +162,10 @@ def playing_around():
         shifts=batch[2].numpy()
 
         pred=hw(torch.cat([inp,out],dim=1),shifts)
-        plt.plot(torch.cat([inp,out],dim=1)[0].cpu().detach().numpy(),"b")
-        plt.plot(torch.cat([inp,out,pred],dim=1)[0].cpu().detach().numpy(),"g")
+        plt.plot(torch.cat([inp,out],dim=1)[0].cpu().detach().numpy(),"b", label="Original")
+        plt.plot(torch.cat([inp,out,pred],dim=1)[0].cpu().detach().numpy(),"g", label="Forecast")
+        plt.legend()
+
         plt.savefig("../outputs/forecasting.png")
         plt.close()     
 
