@@ -82,7 +82,6 @@ def playing_around():
     batch=next(iter(test_dl))
     inp=batch[0].float().to(device)#.unsqueeze(2)
     out=batch[1].float().to(device)#.unsqueeze(2).float()
-    print(inp.size(), out.size())
     shifts=batch[2].numpy()
     pred=hw(inp, shifts)
 
