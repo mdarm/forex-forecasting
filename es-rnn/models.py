@@ -95,8 +95,8 @@ class ESRNN(nn.Module):
         else:
             de_level = de_season - smoothed_value
         
-        noise = torch.randn(de_level.shape[0], de_level.shape[1])
-        noisy = de_level  # +noise
+        #noise = torch.randn(de_level.shape[0], de_level.shape[1])
+        noisy = de_level  # +noise for augmentation
         noisy = noisy.unsqueeze(2)
         
         feature = self.rnn(noisy)[1].squeeze()
@@ -112,3 +112,110 @@ class ESRNN(nn.Module):
             return smoothed_value[:, -1].unsqueeze(1) + season_forecast + trend_forecast + pred
         else:
             return smoothed_value[:, -1].unsqueeze(1) + season_forecast + pred
+
+
+class ESRNN1(nn.Module):
+    
+    def __init__(self, hidden_size=16, slen=12, pred_len=12, use_trend=True):
+        super(ESRNN1, self).__init__()
+        
+        self.hw = HoltWinters(init_a=0.1, init_b=0.1, init_g=0.1)
+        self.rnn = nn.GRU(hidden_size=hidden_size, input_size=1, batch_first=True)
+        self.lin = nn.Linear(hidden_size, pred_len)
+        self.pred_len = pred_len
+        self.slen = slen
+        self.use_trend = use_trend  # Whether to use the trend component or not
+        
+    def forward(self, series, shifts):
+        # Get the level (smoothed value) from HoltWinters
+        _, smoothed_value, _, _ = self.hw(series, shifts, rv=True, n_preds=0)
+        
+        # Local normalization using the level
+        normalized_series = series / (smoothed_value + 1e-7)  # Adding a small value to avoid division by zero
+        
+        batch_size = normalized_series.shape[0]
+        _, smoothed_value, smoothed_season, smoothed_trend = self.hw(normalized_series, shifts, rv=True, n_preds=0)
+        
+        # De-seasonalize and de-level considering the trend if use_trend is True
+        de_season = normalized_series - smoothed_season
+        if self.use_trend:
+            de_level = de_season - smoothed_value - smoothed_trend
+        else:
+            de_level = de_season - smoothed_value
+        
+        noise = torch.randn(de_level.shape[0], de_level.shape[1])
+        noisy = de_level  # +noise
+        noisy = noisy.unsqueeze(2)
+        
+        feature = self.rnn(noisy)[1].squeeze()
+        pred = self.lin(feature)
+        
+        season_forecast = [smoothed_season[:, i % self.slen] for i in range(self.pred_len)]
+        season_forecast = torch.stack(season_forecast, dim=1)
+        
+        # Add back the trend for forecasting if use_trend is True
+        if self.use_trend:
+            trend_forecast = [smoothed_trend[:, i] for i in range(self.pred_len)]
+            trend_forecast = torch.stack(trend_forecast, dim=1)
+            forecast = smoothed_value[:, -1].unsqueeze(1) + season_forecast + trend_forecast + pred
+        else:
+            forecast = smoothed_value[:, -1].unsqueeze(1) + season_forecast + pred
+        
+        # Local denormalization using the level
+        denormalized_forecast = forecast * smoothed_value[:, -1].unsqueeze(1)
+        
+        return denormalized_forecast
+
+
+class ESRNN2(nn.Module):
+    
+    def __init__(self, hidden_size=16, slen=12, pred_len=12, use_trend=True):
+        super(ESRNN2, self).__init__()
+        
+        self.hw = HoltWinters(init_a=0.1, init_b=0.1, init_g=0.1)
+        self.rnn = nn.GRU(hidden_size=hidden_size, input_size=1, batch_first=True)
+        
+        # Point forecast linear layer
+        self.lin = nn.Linear(hidden_size, pred_len)
+        
+        # Linear layers for upper and lower bounds of the 90% confidence interval
+        self.upper_bound = nn.Linear(hidden_size, pred_len)
+        self.lower_bound = nn.Linear(hidden_size, pred_len)
+        
+        self.pred_len = pred_len
+        self.slen = slen
+        self.use_trend = use_trend
+        
+    def forward(self, series, shifts):
+        # Get the level (smoothed value) from HoltWinters for normalization
+        _, smoothed_value, _, _ = self.hw(series, shifts, rv=True, n_preds=0)
+        
+        # Local normalization using the level
+        normalized_series = series / (smoothed_value + 1e-7)
+        
+        batch_size = normalized_series.shape[0]
+        result, smoothed_value, smoothed_season, smoothed_trend = self.hw(normalized_series, shifts, rv=True, n_preds=0)
+        
+        # De-seasonalize and de-level considering the trend if use_trend is True
+        de_season = normalized_series - smoothed_season
+        if self.use_trend:
+            de_level = de_season - smoothed_value - smoothed_trend
+        else:
+            de_level = de_season - smoothed_value
+        
+        noisy = de_level.unsqueeze(2)
+        feature = self.rnn(noisy)[1].squeeze()
+        
+        # Point forecast
+        pred = self.lin(feature)
+        
+        # Calculating the upper and lower bounds for the 90% confidence interval
+        upper = pred + self.upper_bound(feature)
+        lower = pred - self.lower_bound(feature)
+        
+        # Local denormalization using the level
+        denormalized_forecast = pred * smoothed_value[:, -1].unsqueeze(1)
+        denormalized_upper = upper * smoothed_value[:, -1].unsqueeze(1)
+        denormalized_lower = lower * smoothed_value[:, -1].unsqueeze(1)
+        
+        return denormalized_forecast, denormalized_upper, denormalized_lower

@@ -7,8 +7,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import random
-from torch.utils.data import Dataset,sampler,DataLoader
 import torch
+from torch.utils.data import Dataset, sampler, DataLoader
 import torch.nn as nn
 from tqdm import tqdm
 
@@ -56,13 +56,13 @@ def resample_dataset():
 
 
 def playing_around():
-    df = pd.read_csv("../dataset/quarterly.csv")
+    df = pd.read_csv("../dataset/monthly.csv")
     usd_list = df['USD'].tolist()
-    train = usd_list[:-8]
+    train = usd_list[:-14]
     test = usd_list
 
-    sl=SequenceLabelingDataset(train,len(train),False, out_preds=8)
-    sl_t=SequenceLabelingDataset(test,len(test),False, out_preds=8)
+    sl=SequenceLabelingDataset(train, len(train), False, out_preds=14, augment=False)
+    sl_t=SequenceLabelingDataset(test, len(test), False, out_preds=14, augment=False)
 
     train_dl = DataLoader(dataset=sl,
                           batch_size=512,
@@ -72,8 +72,9 @@ def playing_around():
                          batch_size=512,
                          shuffle=False)
 
-    hw = ESRNN(slen=4, pred_len=8)
+    hw = ESRNN1(slen=4, pred_len=14, use_trend=False)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    #device = torch.device('cpu')
     hw = hw.to(device)
     opti = torch.optim.Adam(hw.parameters(), lr=0.01)#,weight_decay=0.0001
 
@@ -100,16 +101,17 @@ def playing_around():
         #batches are determined by a random start integer
         for batch in iter(train_dl):
 
-            opti.zero_grad()
             inp=batch[0].float().to(device)#.unsqueeze(2)
             out=batch[1].float().to(device)#.unsqueeze(2).float()
             shifts=batch[2].numpy()
             #it returns the whole sequence atm 
-            pred=hw(inp,shifts)
-            #loss=(torch.mean((pred-out)**2))**(1/2)
-            loss = hybrid_loss(inp, pred, out)
+            pred = hw(inp, shifts)
+            #loss = F.mse_loss(pred, out)
+            loss = F.l1_loss(pred, out)
+            #loss = hybrid_loss(inp, pred, out)
             train_loss_list_b.append(loss.detach().cpu().numpy())
             
+            opti.zero_grad()
             loss.backward()
             opti.step()
 
@@ -120,9 +122,9 @@ def playing_around():
             out=batch[1].float().to(device)#.unsqueeze(2).float()
             shifts=batch[2].numpy()
             pred=hw(inp,shifts)
-            #loss=torch.mean(torch.abs(pred-out))
-            loss=hybrid_loss(inp, pred, out)
-            #loss=(torch.mean((pred-out)**2))**(1/2)
+            #loss = F.mse_loss(pred, out)
+            loss = F.l1_loss(pred, out)
+            #loss=hybrid_loss(inp, pred, out)
             loss_list_b.append(loss.detach().cpu().numpy())
         
      
@@ -154,7 +156,7 @@ def playing_around():
         plt.savefig("../outputs/validation-forecasting.png")
         plt.close()
 
-        #Forecasting on a 12 period horizon
+        # Forecasting on a 12 period horizon
         batch=next(iter(test_dl))
         inp=batch[0].float().to(device)#.unsqueeze(2)
         out=batch[1].float().to(device)#.unsqueeze(2).float()
@@ -167,6 +169,13 @@ def playing_around():
 
         plt.savefig("../outputs/forecasting.png")
         plt.close()     
+
+        param_list=[]
+        for params in hw.parameters():
+            param_list.append(params)
+        param_list=torch.sigmoid(params[0:3]).cpu().detach().numpy()
+
+        print(param_list)
 
 
 if __name__ == "__main__":
