@@ -1,8 +1,39 @@
-# Forex Forecasting using Neural Networks 
+# Forex Forecasting
 
-## Purpose
+This repository contains models designed to forecast foreign exchange currencies, using Neural Networks. Two hybrid methods are presented ([SCNN_Model](SCNN_Model) and [es-rnn](es-rnn)) while a purely statistical one ([V-AR-model](V-AR-model)) was used as a benchmark. A detailed analysis of implementations, methodology, and results can be found at the [report](report/report.pdf).
 
-The purpose of this codebase is to forecast foreign exchange rates (Forex) using Neural Networks. 
+The project was carried out as a key part of the curriculum for the 'Μ401 - Deep Neural Networks' course, as taught at the National and Kapodistrian University of Athens (NKUA), during the Fall of 2022. 
+
+
+## Project Structure
+
+```bash
+$PROJECT_ROOT
+¦
++-- SCNN_Model 
+¦   # Forecasting using a simple Exponential Smoothing
+¦   # and Convolutional Neural Networks
+¦
++-- V-AR-model 
+¦   # Forecasting using Vector Autoregression
+¦   # (used as a benchmark)
+¦
++-- es-rnn 
+¦   # Forecasting using Exponential Smoothing and Recurrent Neural Networks
+¦
++-- presentation 
+¦   # Presentation sumarising implementations, results, and conclusions 
+¦
++-- report 
+    # Comprehensive report detailing implementations, results, and conclusions
+```
+
+## Getting Started
+
+### Algorithms
+
+Before diving into the individual methodologies, ensure you have the necessary dependencies installed. Each implementation directory ([SCNN_Model](SCNN_Model), [V-AR-model](V-AR-model), [es-rnn](es-rnn)) contains its own `README.md` file, detailing specific requirements and dependencies, so have a look at it before running the respective model.
+
 
 ## Data Source
 
@@ -18,19 +49,6 @@ These rates represent the official currencies of non-euro area Member States of 
 | ...        | ...   | ...   | ...   | ... | ...   | ...   |
 | 1999-01-04 | 1.1789| 133.73| NaN   | ... | NaN   | 6.9358 |
 
-## Steps
-
-1. Data is first downloaded from the European Central Bank's website.
-2. Preprocessing steps are performed to clean the data and make it suitable for training.
-3. Various forecasting models from the PyTorch Forecasting library are then applied to the cleaned data.
-
-## Requirements
-
-Install the requirements by simpy typing:
-
-```bash
-pip install -r requirements.txt
-```
 
 ## Authors
 
