@@ -29,7 +29,6 @@ def clean_data(csv_file_path, cleaned_csv_file_path):
 
     print(f"Data cleaned and saved to {cleaned_csv_file_path}. Dropped columns: {drop_columns}")
 
-
 def resample_data(input_csv_path, output_folder):
     """
     Resamples the dataset to different frequencies (daily, weekly, monthly, quarterly, yearly)

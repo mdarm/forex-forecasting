@@ -22,7 +22,6 @@ def download_zip(url, save_path):
     else:
         return False
 
-
 def unzip_and_rename(zip_path, unzip_dir, original_name, new_name):
     """
     Unzips a zip file, renames the unzipped CSV, and deletes the zip.
