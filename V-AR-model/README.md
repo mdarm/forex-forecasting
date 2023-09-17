@@ -7,3 +7,5 @@ It should be noted that all variables have to be of the same order of integratio
 - All variables are I(d) (non-stationary) with d > 0.
   - The variables are cointegrated: the error correction term has to be included in the VAR.
   - The variables are not cointegrated: first, the variables have to be differenced d times and one has a VAR in difference.
+ 
+  As part of its parameter optimization, 
