@@ -51,10 +51,6 @@ def resample_data(input_csv_path, output_folder):
         'yearly':    'Y'
     }
     
-    # Create the output folder if it does not exist
-    #if not os.path.exists(output_folder):
-    #    os.makedirs(output_folder)
-    
     for freq_name, freq_code in frequencies.items():
         resampled_df = df.resample(freq_code).mean()
         resampled_df.dropna(how='all', inplace=True)

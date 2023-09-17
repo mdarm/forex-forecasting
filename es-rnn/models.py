@@ -4,7 +4,6 @@ import torch.nn as nn
 
 
 class HoltWintersNoTrend(nn.Module):
-    
     def __init__(self, init_a=0.1, init_g=0.1, slen=5, mode='multiplicative'):
         super(HoltWintersNoTrend, self).__init__()
         
@@ -31,7 +30,6 @@ class HoltWintersNoTrend(nn.Module):
         if return_coefficients:
             value_list = []
             season_list = []
-        
         for i in range(series.shape[1] + n_preds):
             if i == 0:
                 smooth = series[:, 0]
@@ -40,7 +38,6 @@ class HoltWintersNoTrend(nn.Module):
                     value_list.append(smooth)
                     season_list.append(seasonals[i % self.slen])
                     continue
-
             if i < series.shape[1]:
                 smooth_prev = smooth
                 season_prev = seasonals[i % self.slen]
@@ -71,7 +68,6 @@ class HoltWintersNoTrend(nn.Module):
 
 
 class ESRNN(nn.Module):
-    
     def __init__(self, hidden_size=16, slen=14, pred_len=14, mode='multiplicative'):
         super(ESRNN, self).__init__()
         
