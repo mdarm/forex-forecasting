@@ -91,17 +91,15 @@ class ESRNN(nn.Module):
             de_season = series / smoothed_season
 
         de_level = de_season / smoothed_level
-        #noise = torch.randn(de_level.shape[0], de_level.shape[1])
-        noisy = de_level #+ noise
-        noisy = noisy.unsqueeze(2)
+        de_level = de_level.unsqueeze(2)
         
-        feature = self.rnn(noisy)[1].squeeze()
+        feature = self.rnn(de_level)[1].squeeze()
         pred = self.lin(feature)
         
         season_forecast = [smoothed_season[:, i % self.slen] for i in range(self.pred_len)]
         season_forecast = torch.stack(season_forecast, dim=1)
 
-        # For re-seasoning and re-leveling the RNN's output:
+        # Re-season and re-level the RNN's output
         if self.hw.mode == 'additive':
             return smoothed_level[:, -1].unsqueeze(1) + season_forecast + pred
         else:
