@@ -1,11 +1,12 @@
 ## Overview
+
 This is a work-in-progress of implementing ES-RNN by Slawek Smyl, winner of the M4 competition, and using it in a heuristic manner for forex-forecasting.
 
 This repo contains:
 - [x] Holt-Winters implementation.
 - [x] GRU residuals learner.
 - [x] Multiplicative & Additive time-series-reconstruction.
-- [x] Forecasting of the forex dataset; training as well as metric results can be seen in the [outputs](outputs) folder.
+- [x] Forecasting of the forex dataset; training as well as metric results can be found in the [outputs](outputs) folder.
 
 
 ## Differences between Slawek's version and this one
