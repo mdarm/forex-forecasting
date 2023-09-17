@@ -1,3 +1,11 @@
+"""
+Created in Sep 2023; initial github version was around May 2023.
+@author: Darmanis Michael 
+internal version no: 8, for the new test set (without nulls) and the option of additive-forecast-reconstruction
+
+The program is meant to save the forecast training-history and evaluations of a simplified version of Slawek's ES-RNN. The daily updated dataset, basic preprocessing and frequency resampling are all handled within.
+"""
+
 import os
 import sys
 import numpy as np 
@@ -48,7 +56,6 @@ def resample_dataset():
 
 
 def training():
-
     # Sampling frequencies and corresponding prediction horizons    
     frequencies = {
         'daily':    14,
