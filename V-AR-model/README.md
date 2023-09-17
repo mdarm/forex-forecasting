@@ -16,4 +16,4 @@ In general, our V-AR model achieves a sMAPE (symmetric Mean Absolute Percentage 
 - training set size.
 
 
-Expanding to V-ARMA could potentially further improve performance. The model serves as a benchmark for the various NN models' performance.
+Expanding to V-ARMA could potentially further improve performance, at the risk of overfitting and. The model serves as a benchmark for the various NN models' performance.
