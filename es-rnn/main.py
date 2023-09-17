@@ -71,56 +71,63 @@ def training():
         results = {}
         for coin in df.columns[1:]:
             coin_list = df[coin].tolist()
-            train = coin_list[:-12]
-            test = coin_list
-            sl = SequenceLabeling(train, len(train), False, seasonality=horizon, out_preds=horizon)
-            sl_t = SequenceLabeling(test, len(test), False, seasonality=horizon, out_preds=horizon)
+            test = coin_list[-horizon:]
+            train = coin_list[:-horizon]
+            val = coin_list
+            sl =   SequenceLabeling(train, len(train), False, seasonality=horizon, out_preds=horizon)
+            sl_v = SequenceLabeling(val, len(val), False, seasonality=horizon, out_preds=horizon)
             
             train_dl = DataLoader(dataset=sl, batch_size=512, shuffle=False)
-            test_dl = DataLoader(dataset=sl_t, batch_size=512, shuffle=False)
+            val_dl = DataLoader(dataset=sl_v, batch_size=512, shuffle=False)
             
-            hw = ESRNN(hidden_size=16, slen=horizon, pred_len=horizon, mode='multiplicative')
+            hw = ESRNN(hidden_size=8, slen=horizon, pred_len=horizon, mode='multiplicative')
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
             hw = hw.to(device)
             
             opti = torch.optim.Adam(hw.parameters(), lr=0.01)
-            overall_loss = []
+            early_stopper = EarlyStopper(patience=3, min_delta=0.01)
+            overall_loss_val = []
             overall_loss_train = []
 
             print(f"\nTraining model for: {coin}\n{'=' * 30}") 
-            for _ in tqdm(range(5)):
-                loss_list_b = []
-                train_loss_list_b = []
+            for _ in tqdm(range(20)):
+                validation_loss = []
+                training_loss = []
                 for batch in iter(train_dl):
                     opti.zero_grad()
                     inp = batch[0].float().to(device)
                     out = batch[1].float().to(device)
                     shifts = batch[2].numpy()
                     pred = hw(inp, shifts)
-                    loss = (torch.mean((pred-out)**2))**(1/2)
-                    train_loss_list_b.append(loss.detach().cpu().numpy())
+                    loss = F.l1_loss(pred, out) 
+                    training_loss.append(loss.detach().cpu().numpy())
                     loss.backward()
                     opti.step()
-                for batch in iter(test_dl):
+
+                for batch in iter(val_dl):
                     inp = batch[0].float().to(device)
                     out = batch[1].float().to(device)
                     shifts = batch[2].numpy()
                     pred = hw(inp, shifts)
-                    loss = (torch.mean((pred-out)**2))**(1/2)
-                    loss_list_b.append(loss.detach().cpu().numpy())
+                    loss = F.l1_loss(pred, out) 
+                    validation_loss.append(loss.detach().cpu().numpy())
                     pred = hw(inp, shifts).detach()
                     inp.detach()
                     out.detach()
-                    
-                print("Mean training loss:", np.mean(train_loss_list_b))
-                print("Mean validation loss:", np.mean(loss_list_b))
-                overall_loss.append(np.mean(loss_list_b))
-                overall_loss_train.append(np.mean(train_loss_list_b))
 
-            plot_losses(overall_loss_train, overall_loss,
+                print("Mean training loss:", np.mean(training_loss))
+                print("Mean validation loss:", np.mean(validation_loss))
+
+                overall_loss_val.append(np.mean(validation_loss))
+                overall_loss_train.append(np.mean(training_loss))
+
+                if early_stopper.early_stop(np.mean(validation_loss)):             
+                    break
+
+            plot_losses(overall_loss_train, overall_loss_val,
                         coin, f"../outputs/{frequency}/")
 
-            batch = next(iter(test_dl))
+            batch = next(iter(val_dl))
             inp = batch[0].float().to(device)
             out = batch[1].float().to(device)
             shifts = batch[2].numpy()
@@ -129,10 +136,10 @@ def training():
             pred = hw(torch.cat([inp, out], dim=1), shifts)
             
             predictions = pred[0:][0].cpu().detach().numpy()
-            output = out[0:][0].cpu().detach().numpy()
+            test = np.asarray(test) 
 
-            mse_val = mse(output, predictions)
-            smape_val = smape(output, predictions)
+            mse_val = mse(test, predictions)
+            smape_val = smape(test, predictions)
             results[coin] = {'mse': mse_val, 'smape': smape_val}
             print("\n")
 
