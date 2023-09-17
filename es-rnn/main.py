@@ -4,11 +4,8 @@ import sys
 import numpy as np 
 import pandas as pd
 
-import matplotlib.pyplot as plt
-
-import random
 import torch
-from torch.utils.data import Dataset, sampler, DataLoader
+from torch.utils.data import DataLoader
 import torch.nn.functional as F 
 from tqdm import tqdm
 
@@ -59,8 +56,8 @@ def training():
 
     # Sampling frequencies and corresponding prediction horizons    
     frequencies = {
- #       'daily':     14,
-#        'weekly':    13,
+ #       'daily':    14,
+#        'weekly':   13,
         'monthly':   18,
         'quarterly': 8,
         'yearly':    6 
