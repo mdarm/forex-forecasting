@@ -8,4 +8,6 @@ It should be noted that all variables have to be of the same order of integratio
   - The variables are cointegrated: the error correction term has to be included in the VAR.
   - The variables are not cointegrated: first, the variables have to be differenced d times and one has a VAR in difference.
  
-  As part of its parameter optimization, 
+As part of its parameter optimization, an augmented Dickey-Fuller test is performed, in order to decide the order of differences, as well as multiple AIC tests, in order to find the optimal lag order.
+
+The model serves as a benchmark for the various NN models' performance.
