@@ -10,7 +10,7 @@ It should be noted that all variables have to be of the same order of integratio
  
 As part of its parameter optimization, an augmented Dickey-Fuller test is performed, in order to decide the order of differences, as well as multiple AIC (Akaike Information Criterion) tests, in order to find the optimal lag order. The model's parameters are:
 - 1 order of difference,
-- 2-5 lag terms (AR), depending on the seasonality and size of training set,
+- 2-5 lag terms (AR), depending on the period and size of training set,
 - 0 innovation terms (Moving Average/MA).
 
 The low number of both differences and lag terms are most likely due to the fact that foreign exchange rates rarely depend on distant past values and lack seasonality. Expanding to V-ARMA could potentially further improve performance, at the risk of overfitting. The model serves as a benchmark for the various NN models' performance.
