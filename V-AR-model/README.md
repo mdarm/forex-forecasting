@@ -12,7 +12,7 @@ As part of its parameter optimization, an augmented Dickey-Fuller test is perfor
 - 1 order of difference,
 - 2-5 lag terms (AR), depending on the seasonality and size of training set,
 - 0 innovation terms (Moving Average/MA).
-- 
+
 The low number of both differences and lag terms are most likely due to the fact that foreign exchange rates rarely depend on distant past values and lack seasonality. Expanding to V-ARMA could potentially further improve performance, at the risk of overfitting. The model serves as a benchmark for the various NN models' performance.
 
 In general, our V-AR model achieves a sMAPE (symmetric Mean Absolute Percentage Error) of around 0.5-3%, depending on the:
