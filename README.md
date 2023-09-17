@@ -19,7 +19,7 @@ $PROJECT_ROOT
 ¦   # (used as a benchmark)
 ¦
 +-- es-rnn 
-¦   # Forecasting using Exponential Smoothing and Recurrent Neural Networks
+¦   # Forecasting using Holt-Winters and Recurrent Neural Networks
 ¦
 +-- presentation 
 ¦   # Presentation sumarising implementations, results, and conclusions 
