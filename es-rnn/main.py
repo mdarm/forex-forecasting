@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import random
 import torch
 from torch.utils.data import Dataset, sampler, DataLoader
-import torch.nn as nn
+import torch.nn.functional as F 
 from tqdm import tqdm
 
 from fetch_data import download_zip, unzip_and_rename
@@ -55,131 +55,102 @@ def resample_dataset():
     resample_data(processed_csv_path, ouput_path)
 
 
-def playing_around():
-    df = pd.read_csv("../dataset/monthly.csv")
-    usd_list = df['USD'].tolist()
-    train = usd_list[:-14]
-    test = usd_list
+def training():
 
-    sl=SequenceLabelingDataset(train, len(train), False, out_preds=14, augment=False)
-    sl_t=SequenceLabelingDataset(test, len(test), False, out_preds=14, augment=False)
+    # Sampling frequencies and corresponding prediction horizons    
+    frequencies = {
+ #       'daily':     14,
+#        'weekly':    13,
+        'monthly':   18,
+        'quarterly': 8,
+        'yearly':    6 
+    }
 
-    train_dl = DataLoader(dataset=sl,
-                          batch_size=512,
-                          shuffle=False)
-
-    test_dl = DataLoader(dataset=sl_t,
-                         batch_size=512,
-                         shuffle=False)
-
-    hw = ESRNN1(slen=4, pred_len=14, use_trend=False)
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    #device = torch.device('cpu')
-    hw = hw.to(device)
-    opti = torch.optim.Adam(hw.parameters(), lr=0.01)#,weight_decay=0.0001
-
-    #Initial Prediction 
-    overall_loss = []
-    batch=next(iter(test_dl))
-    inp=batch[0].float().to(device)#.unsqueeze(2)
-    out=batch[1].float().to(device)#.unsqueeze(2).float()
-    shifts=batch[2].numpy()
-    pred=hw(inp, shifts)
-
-    plt.plot(torch.cat([inp[0],out[0,:]]).cpu().numpy(),"g",label="Original")
-    plt.plot(torch.cat([inp[0],pred[0,:]]).cpu().detach().numpy(),"r",label="Prediction")
-    plt.legend()
-    plt.savefig("../outputs/initial-prediction.png")
-    plt.close()
-
-    overall_loss_train=[]
-    overall_loss=[]
-    for j in tqdm(range(20)):
-        loss_list_b=[]
-        train_loss_list_b=[]
-        #here we use batches of past, and to be forecasted value
-        #batches are determined by a random start integer
-        for batch in iter(train_dl):
-
-            inp=batch[0].float().to(device)#.unsqueeze(2)
-            out=batch[1].float().to(device)#.unsqueeze(2).float()
-            shifts=batch[2].numpy()
-            #it returns the whole sequence atm 
-            pred = hw(inp, shifts)
-            #loss = F.mse_loss(pred, out)
-            loss = F.l1_loss(pred, out)
-            #loss = hybrid_loss(inp, pred, out)
-            train_loss_list_b.append(loss.detach().cpu().numpy())
+    for frequency, horizon in frequencies.items():
+        df = pd.read_csv(f"../dataset/{frequency}.csv")
+        results = {}
+        for coin in df.columns[1:]:
+            coin_list = df[coin].tolist()
+            train = coin_list[:-12]
+            test = coin_list
+            sl = SequenceLabeling(train, len(train), False, seasonality=horizon, out_preds=horizon)
+            sl_t = SequenceLabeling(test, len(test), False, seasonality=horizon, out_preds=horizon)
             
-            opti.zero_grad()
-            loss.backward()
-            opti.step()
+            train_dl = DataLoader(dataset=sl, batch_size=512, shuffle=False)
+            test_dl = DataLoader(dataset=sl_t, batch_size=512, shuffle=False)
+            
+            hw = ESRNN(hidden_size=16, slen=horizon, pred_len=horizon, mode='multiplicative')
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            hw = hw.to(device)
+            
+            opti = torch.optim.Adam(hw.parameters(), lr=0.01)
+            overall_loss = []
+            overall_loss_train = []
 
+            print(f"\nTraining model for: {coin}\n{'=' * 30}") 
+            for _ in tqdm(range(5)):
+                loss_list_b = []
+                train_loss_list_b = []
+                for batch in iter(train_dl):
+                    opti.zero_grad()
+                    inp = batch[0].float().to(device)
+                    out = batch[1].float().to(device)
+                    shifts = batch[2].numpy()
+                    pred = hw(inp, shifts)
+                    loss = (torch.mean((pred-out)**2))**(1/2)
+                    train_loss_list_b.append(loss.detach().cpu().numpy())
+                    loss.backward()
+                    opti.step()
+                for batch in iter(test_dl):
+                    inp = batch[0].float().to(device)
+                    out = batch[1].float().to(device)
+                    shifts = batch[2].numpy()
+                    pred = hw(inp, shifts)
+                    loss = (torch.mean((pred-out)**2))**(1/2)
+                    loss_list_b.append(loss.detach().cpu().numpy())
+                    pred = hw(inp, shifts).detach()
+                    inp.detach()
+                    out.detach()
+                    
+                print("Mean training loss:", np.mean(train_loss_list_b))
+                print("Mean validation loss:", np.mean(loss_list_b))
+                overall_loss.append(np.mean(loss_list_b))
+                overall_loss_train.append(np.mean(train_loss_list_b))
 
-        #here we use all the available values to forecast the future ones and eval on it
-        for batch in iter(test_dl):
-            inp=batch[0].float().to(device)#.unsqueeze(2)
-            out=batch[1].float().to(device)#.unsqueeze(2).float()
-            shifts=batch[2].numpy()
-            pred=hw(inp,shifts)
-            #loss = F.mse_loss(pred, out)
-            loss = F.l1_loss(pred, out)
-            #loss=hybrid_loss(inp, pred, out)
-            loss_list_b.append(loss.detach().cpu().numpy())
-        
-     
-        print(np.mean(loss_list_b))
-        print(np.mean(train_loss_list_b))
-        overall_loss.append(np.mean(loss_list_b))
-        overall_loss_train.append(np.mean(train_loss_list_b))
+            plot_losses(overall_loss_train, overall_loss,
+                        coin, f"../outputs/{frequency}/")
 
-        # Plot of Train and Validation Loss, we nicely converge
-        plt.plot(overall_loss, "g", label="Validation Loss")
-        plt.plot(overall_loss_train, "r", label="Training Loss")
-        plt.legend()
-        plt.savefig("../outputs/training-loss.png")
-        plt.close()
+            batch = next(iter(test_dl))
+            inp = batch[0].float().to(device)
+            out = batch[1].float().to(device)
+            shifts = batch[2].numpy()
+            pred = hw(inp, shifts).detach()
 
-        #Forecasting on the Validation set
-        batch=next(iter(test_dl))
-        inp=batch[0].float().to(device)#.unsqueeze(2)
-        out=batch[1].float().to(device)#.unsqueeze(2).float()
-        shifts=batch[2].numpy()
-        pred=hw(torch.cat([inp,out],dim=1),shifts)
+            pred = hw(torch.cat([inp, out], dim=1), shifts)
+            
+            predictions = pred[0:][0].cpu().detach().numpy()
+            output = out[0:][0].cpu().detach().numpy()
 
-        #plt.plot(torch.cat([inp,out,pred],dim=1)[0].detach().numpy(),"r")
+            mse_val = mse(output, predictions)
+            smape_val = smape(output, predictions)
+            results[coin] = {'mse': mse_val, 'smape': smape_val}
+            print("\n")
 
-        plt.plot(torch.cat([inp[0],out[0,:]]).cpu().detach().numpy(),"g",label="Original")
-        plt.plot(torch.cat([inp[0],pred[0,:]]).cpu().detach().numpy(),"r",label="Prediction")
-        plt.legend()
+        # Save results to text file
+        with open(f"../outputs/{frequency}/results.txt", "w") as f:
+            for coin, metrics in results.items():
+                f.write(f"{coin} - MSE: {metrics['mse']}, SMAPE: {metrics['smape']}\n")
+            avg_mse = np.mean([metrics['mse'] for metrics in results.values()])
+            avg_smape = np.mean([metrics['smape'] for metrics in results.values()])
+            f.write(f"\nAverage MSE for {frequency} data and a {horizon} prediction horizon: {avg_mse}\n")
+            f.write(f"Average SMAPE for {frequency} data and a {horizon} prediction horizon: {avg_smape}\n")
 
-        plt.savefig("../outputs/validation-forecasting.png")
-        plt.close()
-
-        # Forecasting on a 12 period horizon
-        batch=next(iter(test_dl))
-        inp=batch[0].float().to(device)#.unsqueeze(2)
-        out=batch[1].float().to(device)#.unsqueeze(2).float()
-        shifts=batch[2].numpy()
-
-        pred=hw(torch.cat([inp,out],dim=1),shifts)
-        plt.plot(torch.cat([inp,out],dim=1)[0].cpu().detach().numpy(),"b", label="Original")
-        plt.plot(torch.cat([inp,out,pred],dim=1)[0].cpu().detach().numpy(),"g", label="Forecast")
-        plt.legend()
-
-        plt.savefig("../outputs/forecasting.png")
-        plt.close()     
-
-        param_list=[]
-        for params in hw.parameters():
-            param_list.append(params)
-        param_list=torch.sigmoid(params[0:3]).cpu().detach().numpy()
-
-        print(param_list)
+        print("Overall MSE for {} forex frequency and a {} prediction horizon: {:.2f}".format(frequency, horizon, avg_mse))
+        print("Overall sMAPE for {} forex frequency and a {} prediciton horizon: {:.2f}".format(frequency, horizon, avg_smape))
 
 
 if __name__ == "__main__":
     create_raw_dataset()
     process_dataset()
     resample_dataset()
-    playing_around()
+    training()
