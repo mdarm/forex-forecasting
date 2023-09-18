@@ -1,6 +1,6 @@
 # Forex Forecasting
 
-This repository contains models designed to forecast foreign exchange currencies using Neural Networks. Two hybrid methods are presented ([SCNN_Model](SCNN_Model) and [es-rnn](es-rnn)) while a purely statistical one ([V-AR-model](V-AR-model)) was used as a benchmark. A detailed analysis of implementations, methodology, and results can be found in the [report](report/report.pdf).
+This repository contains models designed to forecast foreign exchange currencies using Neural Networks. Two hybrid methods are presented ([SCNN_model](SCNN_model) and [es-rnn](es-rnn)) while a purely statistical one ([V-AR-model](V-AR-model)) was used as a benchmark. A detailed analysis of implementations, methodology, and results can be found in the [report](report/report.pdf).
 
 The project was carried out as a key part of the curriculum for the 'Μ401 - Deep Neural Networks' course, as taught at the National and Kapodistrian University of Athens (NKUA), during the Fall of 2022. 
 
@@ -10,7 +10,7 @@ The project was carried out as a key part of the curriculum for the 'Μ401 - Dee
 ```bash
 $PROJECT_ROOT
 ¦
-+-- SCNN_Model 
++-- SCNN_model 
 ¦   # Forecasting using a simple Exponential Smoothing
 ¦   # and Convolutional Neural Networks
 ¦
@@ -31,7 +31,7 @@ $PROJECT_ROOT
 
 ## Algorithms
 
-Before diving into the individual methodologies, ensure you have the necessary dependencies installed. Each implementation directory ([SCNN_Model](SCNN_Model), [V-AR-model](V-AR-model), [es-rnn](es-rnn)) contains its own `README.md` file, detailing specific requirements and dependencies, so have a look at it before running the respective model.
+Before diving into the individual methodologies, ensure you have the necessary dependencies installed. Each implementation directory ([SCNN_Model](SCNN_model), [V-AR-model](V-AR-model), [es-rnn](es-rnn)) contains its own `README.md` file, detailing specific requirements and dependencies, so have a look at it before running the respective model.
 
 
 ## Data Source
