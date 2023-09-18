@@ -22,7 +22,7 @@ $PROJECT_ROOT
 ¦   # Forecasting using Holt-Winters and Recurrent Neural Networks
 ¦
 +-- presentation 
-¦   # Presentation sumarising implementations, results, and conclusions 
+¦   # Presentation summarising implementations, results, and conclusions 
 ¦
 +-- report 
     # Comprehensive report detailing implementations, results, and conclusions
