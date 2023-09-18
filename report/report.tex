@@ -118,7 +118,7 @@ So, to sum up, the series passes through a pre-training layer, gets it seasonali
 
 \section{Performance Measures For Point Forecasts}
 
-There are many measures available in the forecasting literature for evaluating the performances of forecasting methods\cite{mase}. We decided to use two popular ones, namely, the symmetric mean absolute percentage error (sMAPE\footnote{this was actually part of the M4-Competition's performance metric known as the overall weighted average (OWA)}; Makridakis, 1993 \cite{smape}) and the mean absolute error (MAE; Hyndman \& Koehler, 2006\cite{mase}). We did that in the hope of not overcomplicating things, while, at the same time, trying to maintain some level of objectivity.
+There are many measures available in the forecasting literature for evaluating the performances of forecasting methods\cite{mase}. We decided to use two popular ones, namely, the symmetric mean absolute percentage error (sMAPE\footnote{this was actually part of the M4-Competition's performance metric knwown as the overall weighted average (OWA)}; Makridakis, 1993 \cite{smape}) and the mean absolute error (MAE; Hyndman \& Koehler, 2006\cite{mase}). We did that in the hope of not overcomplicating things, while, at the same time, trying to maintain some level of objectivity.
 
 \section{Data Description}
 
@@ -212,14 +212,14 @@ Training was performed in all frequencies, using both validation and testing, th
 
 \section{Results}
 
-The results of both hybrid models and the benchmark's, for the USD, are presented in Table~\ref{tab:res}. The rest of the foreign currency yielded similar results, so this table is representative of the overall performance.
+The results of both hybrid models and the benchmark's, for daily and weekly frequencies, are presented in Table~\ref{tab:res}. This table is representative of the overall performance the models had considering all used  urrencies.
 
 The V-AR model appears to be the best performer when considering both sMAPE and MSE. The ES-RNN, while having low sMAPE values, has significantly high MSE values, indicating potential issues. The S-CNN has the highest sMAPE values, suggesting it is the least accurate among the three.
 
 \begin{table*}\centering
 \ra{1.3}
-\caption{Averaged performance estimators for USD}\label{tab:res}
-\begin{tabular}{@{}rrrrcrrr@{}}\toprule
+\caption{Averaged performance estimators for daily and weekly frequencies}\label{tab:res}
+\begin{tabular}{@{}rrrcrr@{}}\toprule
 & \multicolumn{2}{c}{Daily} & \phantom{abc}& \multicolumn{2}{c}{Weekly}\\
 \cmidrule{2-3} \cmidrule{4-6}
 & \textit{sMAPE(\%)} & \textit{MSE} && \textit{sMAPE(\%)} & \textit{MSE} \\
@@ -243,7 +243,7 @@ The choice of choosing the L1 as the training loss function seems to have backfi
 
 The above results emphasise the importance of having ample data when deploying hybrid algorithms, and suggests that traditional statistical methods can still hold their ground in such scenarios.
 
-\section{Conclusions and Future Work/Extensions}
+\section{Conclusions}
 
 In this project we tried blending neural-network techniques with traditional statistical models for forex market forecasting. By using RNNs, CNNs, and Exponential Smoothing together, we hoped to improve predictions. However, our results showed that the V-AR outperformed both of the latter. The training loss function for the ES-RNN might not have been the best choice, as our system consistently leaned towards a positive bias, while the S-CNN did not seem able to handle non-stationary, and short data. In all cases, the old-school statistical methods worked better than the newer hybrid ones did. This tells us that having enough data is crucial, and sometimes, the simpler methods still work best.
 
