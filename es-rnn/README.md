@@ -32,11 +32,11 @@ To replicate the results of the es-rnn on the forex dataset:
 
 1. Clone this repository to your local machine.
    ```
-   git clone git@github.com:mdarm/m4-competition-approaches.git
+   git clone git@github.com:mdarm/neural-networks-project.git
    ```
 2. Navigate to the project directory.
    ```
-   cd m4-competion-approaches/es-rnn/
+   cd neural-networks-project/es-rnn/
    ```
 3. Simply run the `main.py` script.
    ```
