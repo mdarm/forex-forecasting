@@ -1,6 +1,6 @@
 # Forex Forecasting
 
-This repository contains models designed to forecast foreign exchange currencies using Neural Networks. Two hybrid methods are presented ([SCNN_model](SCNN_model) and [es-rnn](es-rnn)) while a purely statistical one ([V-AR-model](V-AR-model)) was used as a benchmark. A detailed analysis of implementations, methodology, and results can be found in the [report](report/report.pdf).
+This repository contains models designed to forecast foreign exchange currencies using Neural Networks. Two hybrid methods are presented ([s-cnn](s-cnn) and [es-rnn](es-rnn)) while a purely statistical one ([v-ar](v-ar)) was used as a benchmark. A detailed analysis of implementations, methodology, and results can be found in the [report](report/report.pdf).
 
 The project was carried out as a key part of the curriculum for the 'Μ401 - Deep Neural Networks' course, as taught at the National and Kapodistrian University of Athens (NKUA), during the Fall of 2022. 
 
@@ -10,7 +10,7 @@ The project was carried out as a key part of the curriculum for the 'Μ401 - Dee
 ```bash
 $PROJECT_ROOT
 ¦
-+-- SCNN_model 
++-- s-cnn 
 ¦   # Forecasting using a simple Exponential Smoothing
 ¦   # and Convolutional Neural Networks
 ¦
