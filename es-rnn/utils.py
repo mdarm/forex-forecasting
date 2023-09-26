@@ -33,7 +33,7 @@ def plot_losses(train_losses, val_losses, coin_name, directory):
     plt.close()
 
 class SequenceLabeling(Dataset):
-    def __init__(self, input,max_size=100,sequence_labeling=True,seasonality=12,out_preds=12):     
+    def __init__(self, input, max_size=100, sequence_labeling=True, seasonality=12, out_preds=12):     
         self.data = input
         self.max_size = max_size
         self.sequence_labeling = sequence_labeling
@@ -43,7 +43,7 @@ class SequenceLabeling(Dataset):
     def __len__(self):
         return int(10000)
     
-    def __getitem__(self):
+    def __getitem__(self, index):
         data_i = self.data
         
         # Randomly shift the inputs to create more data
@@ -66,7 +66,7 @@ class SequenceLabeling(Dataset):
             
         # How much to shift the season 
         shift_steps = start_int%self.seasonality
-        return inp, out,shift_steps
+        return inp, out, shift_steps
 
 class EarlyStopper:
     def __init__(self, patience=1, min_delta=0):
