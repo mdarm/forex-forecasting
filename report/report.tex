@@ -208,6 +208,8 @@ Our ES-RNN model contained two methodologies: the Holts-Winters time series fore
 
 The ES-RNN model underwent iterative training across multiple epochs and using a validation set in batches. In order to avoid overfitting, we implemented an early stopping criterion, of 2 steps patience and 0.01 threshold. Holts-Winters coefficients for level ($\alpha$) and seasonality ($\gamma$) were trained, while the L1-loss was used as the loss function because of its similarity with the sMAPE; both of them are mean absolute differences between forecasted and actual values, though differently normalised\footnote{although again a bit differently (divided by level), so the consideration was that they are similar enough}.
 
+To enhance the robustness, and to simulate a variety of historical contexts, we adopted a random segment-based training approach. Rather than consistently using a fixed window of historical data for predictions, we extracted random sub-segments of the time series during training. Each epoch introduced a series of random starting points within the available time series data. This created a segment which served as the recent history for model training, with the first part being the input (input window) and the subsequent prediction points being the target (output window). Both the input and output windows were, heuristically, taken equal to the horizon number. By constantly altering the perspective of the model, we aimed to achieve a more generalised understanding of the dataset's underlying patterns.
+
 Training was performed in all frequencies, using both validation and testing, the suggested horizon from Table~\ref{tab:m4_horizons}.
 
 \section{Results}
