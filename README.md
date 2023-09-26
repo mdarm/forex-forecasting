@@ -31,7 +31,7 @@ $PROJECT_ROOT
 
 ## Algorithms
 
-Before diving into the individual methodologies, ensure you have the necessary dependencies installed. Each implementation directory ([SCNN_model](SCNN_model), [V-AR-model](V-AR-model), [es-rnn](es-rnn)) contains its own `README.md` file, detailing specific requirements and dependencies, so have a look at it before running the respective model.
+Before diving into the individual methodologies, ensure you have the necessary dependencies installed. Each implementation directory ([SCNN_model](SCNN_model), [V-AR-model](V-AR-model), [es-rnn](es-rnn)) contains its own `README.md` file, detailing specific requirements and dependencies; so have a look at it before running the respective model.
 
 
 ## Data Source
