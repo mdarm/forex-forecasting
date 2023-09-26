@@ -3,9 +3,9 @@ import torch
 import torch.nn as nn
 
 
-class HoltWintersNoTrend(nn.Module):
+class HoltsWintersNoTrend(nn.Module):
     def __init__(self, init_a=0.1, init_g=0.1, slen=5, mode='multiplicative'):
-        super(HoltWintersNoTrend, self).__init__()
+        super(HoltsWintersNoTrend, self).__init__()
         
         # Holt-Winters trainable parameters
         self.alpha = nn.Parameter(torch.tensor(init_a))
@@ -71,7 +71,7 @@ class ESRNN(nn.Module):
     def __init__(self, hidden_size=16, slen=14, pred_len=14, mode='multiplicative'):
         super(ESRNN, self).__init__()
         
-        self.hw = HoltWintersNoTrend(init_a=0.1, init_g=0.1, mode=mode)
+        self.hw = HoltsWintersNoTrend(init_a=0.1, init_g=0.1, mode=mode)
         self.rnn = nn.GRU(hidden_size=hidden_size, input_size=1, batch_first=True)
         self.lin = nn.Linear(hidden_size, pred_len)
         self.pred_len = pred_len
