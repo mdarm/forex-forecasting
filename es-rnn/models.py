@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 import torch
 import torch.nn as nn
 
@@ -47,9 +48,12 @@ class HoltsWintersNoTrend(nn.Module):
                 if self.mode == 'additive':
                     smooth = self.alpha * (series[:, i] - season_prev) + (1 - self.alpha) * smooth_prev
                     seasonals.append(self.gamma * (series[:, i] - smooth) + (1 - self.gamma) * season_prev)
-                else:
+                elif self.mode == 'multiplicative':
                     smooth = self.alpha * (series[:, i] / season_prev) + (1 - self.alpha) * smooth_prev
                     seasonals.append(self.gamma * (series[:, i] / smooth) + (1 - self.gamma) * season_prev)
+                else:
+                    print(f"Invalid mode: {self.mode}. Allowed modes are 'additive' and 'multiplicative'.")
+                    sys.exit(1)
                               
                 if return_coefficients:
                     value_list.append(smooth)
@@ -60,6 +64,7 @@ class HoltsWintersNoTrend(nn.Module):
                     result.append(smooth + seasonals[i % self.slen])
                 else:
                     result.append(smooth * seasonals[i % self.slen])
+                
 
         if return_coefficients:
             return torch.stack(result, dim=1), torch.stack(value_list, dim=1), torch.stack(season_list, dim=1)
@@ -83,8 +88,11 @@ class ESRNN(nn.Module):
         
         if self.hw.mode == 'additive':
             de_season = series - smoothed_season
-        else:
+        elif self.hw.mode == 'multiplicative':
             de_season = series / smoothed_season
+        else:
+            print(f"Invalid mode: {self.hw.mode}. Allowed modes are 'additive' and 'multiplicative'.")
+            sys.exit(1)
 
         de_level = de_season / smoothed_level
         de_level = de_level.unsqueeze(2)
