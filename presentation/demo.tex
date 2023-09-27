@@ -18,7 +18,7 @@
 \newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
 
 \title{Forex Forecasting}
-\subtitle{Combining statistical methods with neural networks}
+\subtitle{Combining forecasting methods with neural networks}
 % Authors
 \author{Efstathios Kotsis \inst{1} \and Michael Darmanis \inst{1} \and Vasilios Venieris \inst{1}}
 % Affiliations
@@ -103,18 +103,12 @@
 
 \begin{frame}{Dataset considerations}
     \begin{itemize}
-        \item \textbf{Missing Values:} Require careful imputation to avoid bias.
-        
+        \item \textbf{Missing Values:} Require careful handling to avoid bias.  
         \item \textbf{Data Frequency:} Daily data, resampling needed for other frequencies.
-        
         \item \textbf{Currency Pairs:} Challenge in selecting relevant pairs.
-        
         \item \textbf{Normalisation:} Essential for data comparability.
-        
         \item \textbf{Non-Trading Days:} Adjustments necessary for continuity.
-        
         \item \textbf{Time Zones:} ECB's CET time zone updates impact intra-day rates.
-        
         \item \textbf{Institutional Bias:} ECB interventions can cause rate discrepancies.
     \end{itemize}
 
@@ -130,7 +124,7 @@ All series were adjusted to a fixed length, ensuring consistency for effective v
         \end{itemize}
         \item Adopted a traditional forecasting method as the foundation, and enhanced it with a Recurrent Neural Network (ES-RNN).
         \begin{itemize}
-            \item \textbf{Why?} To Addressed the linear trend assumption of the forecasting method\cite{ayitey}.
+            \item \textbf{Why?} To Address the linear trend assumption of the forecasting method\cite{ayitey}.
         \end{itemize}
 
 \begin{center}
@@ -140,11 +134,11 @@ All series were adjusted to a fixed length, ensuring consistency for effective v
 Used a VAR (Vector Autoregressive) model for performance comparison and benchmarking.
 \end{itemize}
 
-sMAPE (symmetric Mean Absolute Percentage Error) was used to assess the models
+sMAPE (symmetric Mean Absolute Percentage Error) was used to assess the models.
 
-\[
+\begin{equation*}
 \text{sMAPE} = \frac{200\%}{n} \sum_{t=1}^n \frac{|F_t - A_t|}{|F_t| + |A_t|},
-\]
+\end{equation*}
 
 where 
 \begin{itemize}
@@ -172,6 +166,7 @@ Hourly & 48 \\
 \end{tabular}
 \end{table}
 
+
 \end{frame}
 
 \section{Smoothed Convolutional Neural Network (S-CNN)}
@@ -192,7 +187,7 @@ Hourly & 48 \\
         \item For $\alpha$ values close to 1 we get very little influence of the previous smoothed value.
         \item For $\alpha$ close to 1 we also see that the previous unsmoothed series observation influences the result more than the smoothed values.
         \item For the calculation of $\alpha$, since there is no golden rule, we adopted the $\alpha$ value from the aforementioned publication.
-        \item In particular the authors argue that $\alpha$ should be dependent on the dataset and must be of course between 0 and 1. Also the average value of the series should be less than the difference between max and min.
+        \item Authors argued that $\alpha$ should be dependent on the dataset and must be between 0 and 1. Average value of the series should be less than the difference between max and min.
     \end{itemize}
 So we end up with the following formula
 \begin{equation*}
@@ -208,7 +203,9 @@ s_t = s_{t-1} + \frac{\left( x_{\text{max}} - x_{\text{min}} \right) - \frac{1}{
 Basic architecture from Wibawa et al.\cite{e-cnn} and experimented with different number of hidden layers.
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\columnwidth]{./plots/s-cnn.jpg}
+\def\svgwidth{0.95\columnwidth}
+\includesvg{./plots/cnn_model.drawio.svg}
+%\includegraphics[width=\columnwidth]{./plots/s-cnn.jpg}
 \end{figure}
 \begin{center}
     Kernel size: $1x2$, Stride: $1x1$
@@ -217,7 +214,7 @@ Basic architecture from Wibawa et al.\cite{e-cnn} and experimented with differen
 
 \begin{frame}[allowframebreaks]{S-CNN: Training}
     \begin{center}
-    \textsc{\textbf{How to pick the number of hidden layers?}}
+    \textsc{\textbf{How to pick the number of hidden layers}}
     \end{center}
     We used the Lucas numbers suggested. They derive from the Fibonacci Sequence if instead of adding every 2 successive observations we skip the intermediate and add the K with the K+2 together.
     \begin{figure}[htbp]
@@ -242,7 +239,7 @@ Number of Hidden Layers & Training Time (hh:mm:ss) \\
 \end{tabular}
 \end{table}
 \begin{center}
-    \textsc{\textbf{Training steps...}}
+    \textsc{\textbf{Training steps}}
 \end{center}
 \begin{itemize}
 \item Split the dataset into series of different frequencies.
@@ -251,7 +248,7 @@ Number of Hidden Layers & Training Time (hh:mm:ss) \\
 \end{itemize}
 \newpage
 \begin{center}
-    \textsc{\textbf{Training history.}}
+    \textsc{\textbf{Training history}}
 \end{center}
 In order to balance training with only recent data, or feeding with irrelevant outdated history, we train with a list of possible training lengths.
 \begin{itemize}
@@ -263,7 +260,7 @@ In order to balance training with only recent data, or feeding with irrelevant o
 \end{itemize}
 \newpage
 \begin{center}
-    \textsc{\textbf{Train/validation/test split.}}
+    \textsc{\textbf{Train/validation/test split}}
 \end{center}
 \begin{itemize}
     \item We focused on data after 2010 since in 2008 – 2010 there was the European debt crisis. A plot from the data can show that the economy and the currency fell rapidly in most countries in the European continent and in many other countries.
@@ -281,7 +278,7 @@ For stable currencies, longer training tends to yield more accurate predictions.
 \caption{sMAPE for Daily with 76 Hidden Layers (Biggest Lucas Number Tested)}
 \begin{tabular}{lcc}
 \toprule
-& \multicolumn{2}{c}{SMAPE} \\
+& \multicolumn{2}{c}{sMAPE} \\
 \cmidrule{2-3}
 & Training length 20 days & Training length 240 days \\
 \midrule
@@ -353,7 +350,7 @@ Break down the problem of forecasting into three distinct equations:
 \end{itemize}
 Optimisation problem with respect to $\alpha, \beta, \gamma$.
 \begin{center}
-    \textsc{\textbf{Issue: Formulation works for a linear trend.}}
+    \textsc{\textbf{Issue: Formulation works for a linear trend}}
 \end{center}
 So plug in RNN for the trend component $b_t (\beta)$.
 \end{frame}
@@ -400,7 +397,7 @@ Equation \ref{eq:trend1} is replaced by an RNN in the model as follows:
 \begin{frame}{ES-RNN: Training}
 Used a sliding window. Input and output windows were of constant size. Output size matched the prediction horizon, while input size determined heuristically.
 \begin{center}
-    \textsc{\textbf{Loss Function?}}
+    \textsc{\textbf{Loss Function}}
 \end{center}
 Considered the L1 difference as similar enough to sMAPE; both are mean absolute differences between forecasted and actual values.
 \begin{center}
