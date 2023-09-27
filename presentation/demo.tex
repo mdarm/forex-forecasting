@@ -6,6 +6,8 @@
 \usepackage{booktabs}
 \usepackage{adjustbox}
 \usepackage{svg}
+\usepackage{tikz}
+\usepackage{hyperref}
 \usepackage[scale=2]{ccicons}
 \newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
 
@@ -18,7 +20,7 @@
 \title{Forex Forecasting}
 \subtitle{Combining statistical methods with neural networks}
 % Authors
-\author{Eustathios Kotsis \inst{1} \and Darmanis Michael \inst{1} \and Vasilios Venieris \inst{1}}
+\author{Efstathios Kotsis \inst{1} \and Michael Darmanis \inst{1} \and Vasilios Venieris \inst{1}}
 % Affiliations
 \institute{\inst{1} National and Kapodistrian University of Athens}
 % Date
@@ -29,6 +31,129 @@
 \begin{document}
 
 \maketitle
+
+\begin{frame}{Time Series \& Time Series Forecasting}
+    \begin{columns}[T] % align columns
+        \begin{column}{.5\textwidth}
+            \begin{itemize}
+                \item \textbf{Time series} are observations taken sequentially in time.
+                \item \textbf{Time series forecasting} predicts future values based on past (historical data).
+            \end{itemize}
+        \end{column}
+        
+        \begin{column}{.5\textwidth}
+            \begin{tabular}{|l|r|}
+                \hline
+                Date & Observation \\
+                \hline
+                2018-06-09 & 64 \\
+                2018-06-10 & 66 \\
+                2018-06-11 & 69 \\
+                2018-06-12 & 72 \\
+                \hline
+                2018-06-13 & ? \\
+                2018-06-14 & ? \\
+                \hline
+            \end{tabular}
+            
+        \end{column}
+    \end{columns}
+\end{frame}
+
+
+\begin{frame}{Why Deep Learning Models?}
+    \begin{itemize}
+    \item Deep learning models have shown to perform well in many forecasting scenarios
+        \begin{itemize}
+            \item 2014 Global Energy Forecasting Competition (\href{https://www.crowdanalytix.com/contests/global-energy-forecasting-competition-2014-probabilistic-electricity-price-forecasting}{link})
+            \item 2016 CIF International Time Series Competition (\href{https://irafm.osu.cz/cif/main.php}{link})
+            \item 2017 Web Traffic Time Series Forecasting (\href{https://www.kaggle.com/c/web-traffic-time-series-forecasting#timeline}{link})
+            \item 2018 Corporacion Favorita Grocery Sales Forecasting (\href{https://www.kaggle.com/c/favorita-grocery-sales-forecasting}{link})
+            \item 2018 M4-Competition (\href{https://forecasters.org/blog/2017/12/21/m4-competition-1-1-2018/}{link})
+        \end{itemize}
+    
+    \item Non-parametric
+    \item Flexible and expressive
+    \item Easily inject exogenous features into the model
+    \item Learn from large time series datasets
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Scenario: Forex Forecasting}
+    \begin{itemize}
+        \item Forex is the global marketplace for trading national currencies against one another, operating 24/5.
+        \item  Here, we'll use the European's Central Bank (ECB) dataset for various currencies against the euro
+    \end{itemize}
+\begin{table}[h]
+\centering
+\caption{ECB forex dataset}\label{tab:data}
+\begin{tabular}{ccccccc}
+\toprule
+\textbf{Date} & \textbf{USD} & \textbf{JPY} & \textbf{BGN} & \textbf{...} & \textbf{THB} & \textbf{ZAR} \\
+\midrule
+2023-09-15 & 1.0658 & 157.50 & 1.9558 & ... & 38.145 & 20.2968 \\
+2023-09-14 & 1.0730 & 158.13 & 1.9558 & ... & 38.387 & 20.3109 \\
+... & ... & ... & ... & ... & ... & ... \\
+1999-01-04 & 1.1789 & 133.73 & NaN & ... & NaN & 6.9358 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}{Dataset considerations}
+    \begin{itemize}
+        \item \textbf{Missing Values:} Require careful imputation to avoid bias.
+        
+        \item \textbf{Data Frequency:} Daily data, resampling needed for other frequencies.
+        
+        \item \textbf{Currency Pairs:} Challenge in selecting relevant pairs.
+        
+        \item \textbf{Normalisation:} Essential for data comparability.
+        
+        \item \textbf{Non-Trading Days:} Adjustments necessary for continuity.
+        
+        \item \textbf{Time Zones:} ECB's CET time zone updates impact intra-day rates.
+        
+        \item \textbf{Institutional Bias:} ECB interventions can cause rate discrepancies.
+    \end{itemize}
+
+All series were adjusted to a fixed length, ensuring consistency for effective vectorisation.
+\end{frame}
+
+\begin{frame}[allowframebreaks]{Approach and Assessment}
+
+\begin{itemize}
+        \item Used forecasting methods to supplement a Convolutional Neural Network (S-CNN).
+        \begin{itemize}
+            \item \textbf{Why?} To Address the non-linear nature of Forex data.
+        \end{itemize}
+        \item Adopted a traditional forecasting method as the foundation, and enhanced it with a Recurrent Neural Network (ES-RNN).
+        \begin{itemize}
+            \item \textbf{Why?} To Addressed the linear trend assumption of the forecasting method\cite{ayitey}.
+        \end{itemize}
+
+\begin{center}
+    \textsc{\textbf{Benchmarking}}
+\end{center}
+        
+Used a VAR (Vector Autoregressive) model for performance comparison and benchmarking.
+\end{itemize}
+
+sMAPE (symmetric Mean Absolute Percentage Error) was used to assess the models
+
+\[
+\text{sMAPE} = \frac{200\%}{n} \sum_{t=1}^n \frac{|F_t - A_t|}{|F_t| + |A_t|},
+\]
+
+where 
+\begin{itemize}
+    \item $F_t$ is the forecasted value at time $t$,
+    \item $A_t$ is the actual value at time $t$,
+    \item $n$ is the total number of observations.
+\end{itemize}
+
+\end{frame}
 
 \section{Smoothed Convolutional Neural Network (S-CNN)}
 
@@ -196,11 +321,11 @@ Model struggles with unpredictable currencies like \textit{USD} and \textit{GBP}
 \begin{itemize}
     \item Implementation based on Slawek Smyl\cite{slawek}, 2018
 \url{https://eng.uber.com/m4-forecasting-competition/}, Winner of M4 competition\cite{m4} (code available in C++)
-    \item Use the Hotls-Winters equations\cite{winters}, and replace the trend with an RNN.
+    \item Use the Holt-Winters equations\cite{winters}, and replace the trend with an RNN.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{ES-RNN: Holts-Winters model}
+\begin{frame}{ES-RNN: Holt-Winters model}
 Break down the problem of forecasting into three distinct equations:
 \begin{itemize}
     \item level, $l_t (\alpha)$
@@ -214,7 +339,7 @@ Optimisation problem with respect to $\alpha, \beta, \gamma$.
 So plug in RNN for the trend component $b_t (\beta)$.
 \end{frame}
 
-\begin{frame}{ES-RNN: Holts-Winters model (multiplicative)}
+\begin{frame}{ES-RNN: Holt-Winters model (multiplicative)}
 \begin{align}
     l_t &= \alpha(\frac{y_t}{s_{t-m}}) + (1 - \alpha)l_{t-1} b_{t-1} \label{eq:level}\\
     b_t &= \beta(\frac{l_t}{l_{t-1}}) + (1- \beta) b_{t-1} \label{eq:trend} \\ 
@@ -229,7 +354,7 @@ Equation \ref{eq:trend} is replaced by an RNN from the model as follows:
 \end{align}
 \end{frame}
 
-\begin{frame}{ES-RNN: Holts-Winters model (additive)}
+\begin{frame}{ES-RNN: Holt-Winters model (additive)}
 \begin{align}
     l_t &= \alpha (y_t - s_{t-m}) + (1 - \alpha) (l_{t-1} + b_{t-1}) \label{eq:level1}\\
     b_t &= \beta (l_t - l_{t-1}) + (1- \beta) b_{t-1} \label{eq:trend1}\\ 
@@ -263,13 +388,13 @@ Considered the L1 difference as similar enough to sMAPE; both are mean absolute 
     \textsc{\textbf{Experimented with}}
 \end{center}
     \begin{itemize}
-        \item Both multiplicative and additive Holts-Winters formulations.
+        \item Both multiplicative and additive Holt-Winters formulations.
         \item A simple GRU with various hidden state features (8, 16, 32), i.e. input-window size.
     \end{itemize}
 \end{frame}
 
 \begin{frame}[allowframebreaks]{ES-RNN: Results}
-Multiplicative Holts-Winters is better suited; best results were achieved using an input window of 8.
+Multiplicative Holt-Winters is better suited; best results were achieved using an input window of 8.
 \begin{table}\centering
 \ra{1.3}
 \caption{Averaged sMAPE(\%) values for daily and Weekly Frequencies}
@@ -277,11 +402,11 @@ Multiplicative Holts-Winters is better suited; best results were achieved using 
 \begin{tabular}{@{}rrcr@{}}\toprule
 & Daily && Weekly\\
 \midrule
-\textit{Additive Holts-Winters} \\
+\textit{Additive Holt-Winters} \\
 Input=8 & 23.45 && 17.89\\
 Input=16 & 36.72 && 21.63\\
 Input=32 & 28.83 && 19.42\\
-\textit{Multiplicative Holts-Winters} \\
+\textit{Multiplicative Holt-Winters} \\
 Input=8 & 13.72 && 7.96\\
 Input=16 & 18.25 && 11.37\\
 Input=32 & 16.92 && 9.84\\
