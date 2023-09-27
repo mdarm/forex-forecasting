@@ -4,8 +4,10 @@
 \usepackage{appendixnumberbeamer}
 
 \usepackage{booktabs}
+\usepackage{adjustbox}
 \usepackage{svg}
 \usepackage[scale=2]{ccicons}
+\newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
 
 \usepackage{pgfplots}
 \usepgfplotslibrary{dateplot}
@@ -32,7 +34,7 @@
 
 \begin{frame}{S-CNN: Origin and basic idea}
     \begin{itemize}
-        \item Implementation based on the paper ``Time-series analysis with smoothed Convolutional Neural Network''\cite{e-cnn} .
+        \item Implementation based on the paper ``Time-series analysis with smoothed Convolutional Neural Network''\cite{e-cnn} (no available code) .
         \item Model is univariate, multi-step.
         \item Simple exponential smoothing (remove outliers, average) + CNN.
     \end{itemize}
@@ -50,11 +52,11 @@
     \end{itemize}
 So we end up with the following formula
 \begin{equation*}
-\alpha_{\text{Optimum}} = \frac{\left( X_{\text{max}} - X_{\text{min}} \right) - \frac{1}{n} \sum_{t=1}^{n} X_t}{X_{\text{max}} - X_{\text{min}}},
+\alpha_{\text{opt}} = \frac{\left( X_{\text{max}} - X_{\text{min}} \right) - \frac{1}{n} \sum_{t=1}^{n} X_t}{X_{\text{max}} - X_{\text{min}}},
 \end{equation*}
 and the simple smoothing becomes
 \begin{equation*}
-S_t = S_{t-1} + \frac{\left( X_{\text{max}} - X_{\text{min}} \right) - \frac{1}{n} \sum_{t=1}^{n} X_t}{X_{\text{max}} - X_{\text{min}}} \left( X_t - S_{t-1} \right) .
+s_t = s_{t-1} + \frac{\left( x_{\text{max}} - x_{\text{min}} \right) - \frac{1}{n} \sum_{t=1}^{n} x_t}{x_{\text{max}} - x_{\text{min}}} \left( x_t - s_{t-1} \right) .
 \end{equation*}
 \end{frame}
 
@@ -64,13 +66,16 @@ Basic architecture from Wibawa et al.\cite{e-cnn} and experimented with differen
 \centering
 \includegraphics[width=\columnwidth]{./plots/s-cnn.jpg}
 \end{figure}
+\begin{center}
+    Kernel size: $1x2$, Stride: $1x1$
+\end{center}
 \end{frame}
 
 \begin{frame}[allowframebreaks]{S-CNN: Training}
     \begin{center}
     \textsc{\textbf{How to pick the number of hidden layers?}}
     \end{center}
-    We used the Lucas numbers suggested.They derive from the Fibonacci Sequence if instead of adding every 2 successive observations we skip the intermediate and add the K with the K+2 together.
+    We used the Lucas numbers suggested. They derive from the Fibonacci Sequence if instead of adding every 2 successive observations we skip the intermediate and add the K with the K+2 together.
     \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.6\columnwidth]{./plots/fibonacci.jpg}
@@ -120,7 +125,7 @@ In order to balance training with only recent data, or feeding with irrelevant o
     \item We focused on data after 2010 since in 2008 – 2010 there was the European debt crisis. A plot from the data can show that the economy and the currency fell rapidly in most countries in the European continent and in many other countries.
     \item For the frequencies except Yearly, we trained with splits of 80\%-20\%, 70\%-30\%, and approximately 60\%-40\% for quarterly (training/validation).
     \item We split the dataset accordingly and fed the created datasets to the generators.
-    \item The models were trained for 250 epochs, using the MSE loss function and the Adam optimiser.
+    \item The models were trained for 200 epochs, using the MSE loss function and the Adam optimiser.
 \end{itemize}
 
 \end{frame}
@@ -188,11 +193,56 @@ Model struggles with unpredictable currencies like \textit{USD} and \textit{GBP}
 \section{Exponentially Smoothed Recurrent Neural Network}
 
 \begin{frame}{ES-RNN: Origin and basic idea}
-    
+\begin{itemize}
+    \item Implementation based on Slawek Smyl\cite{slawek}, 2018
+\url{https://eng.uber.com/m4-forecasting-competition/}, Winner of M4 competition\cite{m4} (code available in C++)
+    \item Use the Hotls-Winters equations\cite{winters}, and replace the trend with an RNN.
+\end{itemize}
 \end{frame}
 
 \begin{frame}{ES-RNN: Holts-Winters model}
-    
+Break down the problem of forecasting into three distinct equations:
+\begin{itemize}
+    \item level, $l_t (\alpha)$
+    \item trend, $b_t (\beta)$
+    \item seasonality, $s_{t} (\gamma)$ 
+\end{itemize}
+Optimisation problem with respect to $\alpha, \beta, \gamma$.
+\begin{center}
+    \textsc{\textbf{Issue: Formulation works for a linear trend.}}
+\end{center}
+So plug in RNN for the trend component $b_t (\beta)$.
+\end{frame}
+
+\begin{frame}{ES-RNN: Holts-Winters model (multiplicative)}
+\begin{align}
+    l_t &= \alpha(\frac{y_t}{s_{t-m}}) + (1 - \alpha)l_{t-1} b_{t-1} \label{eq:level}\\
+    b_t &= \beta(\frac{l_t}{l_{t-1}}) + (1- \beta) b_{t-1} \label{eq:trend} \\ 
+    s_{t} &= \gamma \frac{y_t}{l_{t-1} b_{t-1}} + (1-\gamma)s_{t-m} \label{eq:season}\\
+    \Hat{y}_{t+h} &= l_t  b_t^h s_{t-m+h^+_m} \label{eq:predEq}
+\end{align}
+
+Equation \ref{eq:trend} is replaced by an RNN from the model as follows:
+\begin{align}
+    \Hat{y}_{t+1 \dots t+h} &= RNN(X_t) * l_t * s_{t+1 \dots t+h} \label{eq:modifiedEq}\\
+    x_i &= \frac{y_i}{l_t s_i} \label{eq:x}
+\end{align}
+\end{frame}
+
+\begin{frame}{ES-RNN: Holts-Winters model (additive)}
+\begin{align}
+    l_t &= \alpha (y_t - s_{t-m}) + (1 - \alpha) (l_{t-1} + b_{t-1}) \label{eq:level1}\\
+    b_t &= \beta (l_t - l_{t-1}) + (1- \beta) b_{t-1} \label{eq:trend1}\\ 
+    s_t &= \gamma (y_t - l_{t-1} - b_{t-1}) + (1-\gamma) s_{t-m} \label{eq:season1}\\
+    \hat{y}_{t+h} &= l_t + h \cdot b_t + s_{t-m+h (\bmod m)} \label{eq:predEq1}
+\end{align}
+
+Equation \ref{eq:trend1} is replaced by an RNN in the model as follows:
+\begin{align}
+    \hat{y}_{t+1 \dots t+h} &= RNN(X_t) + l_t + s_{t+1 \dots t+h} \label{eq:modifiedEq1}\\
+    x_i &= y_i - l_t - s_i \label{eq:x1}
+\end{align}
+
 \end{frame}
 
 \begin{frame}[fragile]{ES-RNN: Architecture}
@@ -203,12 +253,100 @@ Model struggles with unpredictable currencies like \textit{USD} and \textit{GBP}
     \end{figure}
 \end{frame}
 
-\begin{frame}[allowframebreaks]{ES-RNN: Training}
-    
+\begin{frame}{ES-RNN: Training}
+Used a sliding window. Input and output windows were of constant size. Output size matched the prediction horizon, while input size determined heuristically.
+\begin{center}
+    \textsc{\textbf{Loss Function?}}
+\end{center}
+Considered the L1 difference as similar enough to sMAPE; both are mean absolute differences between forecasted and actual values.
+\begin{center}
+    \textsc{\textbf{Experimented with}}
+\end{center}
+    \begin{itemize}
+        \item Both multiplicative and additive Holts-Winters formulations.
+        \item A simple GRU with various hidden state features (8, 16, 32), i.e. input-window size.
+    \end{itemize}
 \end{frame}
 
 \begin{frame}[allowframebreaks]{ES-RNN: Results}
-    
+Multiplicative Holts-Winters is better suited; best results were achieved using an input window of 8.
+\begin{table}\centering
+\ra{1.3}
+\caption{Averaged sMAPE(\%) values for daily and Weekly Frequencies}
+\begin{adjustbox}{width=0.35\textwidth}
+\begin{tabular}{@{}rrcr@{}}\toprule
+& Daily && Weekly\\
+\midrule
+\textit{Additive Holts-Winters} \\
+Input=8 & 23.45 && 17.89\\
+Input=16 & 36.72 && 21.63\\
+Input=32 & 28.83 && 19.42\\
+\textit{Multiplicative Holts-Winters} \\
+Input=8 & 13.72 && 7.96\\
+Input=16 & 18.25 && 11.37\\
+Input=32 & 16.92 && 9.84\\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+\newpage
+    \begin{center}
+        \textbf{L1 as the training loss function created a positive bias.}
+    \end{center}
+\begin{columns}
+    \begin{column}{0.25\textwidth}
+        \includegraphics[width=\linewidth]{plots/CAD_loss_plot.png}
+    \end{column}
+    \begin{column}{0.25\textwidth}
+        \includegraphics[width=\linewidth]{plots/JPY_loss_plot.png}
+    \end{column}
+    \begin{column}{0.25\textwidth}
+        \includegraphics[width=\linewidth]{plots/NZD_loss_plot.png}
+    \end{column}
+    \begin{column}{0.25\textwidth}
+        \includegraphics[width=\linewidth]{plots/SEK_loss_plot.png}
+    \end{column}
+\end{columns}
+\end{frame}
+
+\section{Comparison with Benchmark}
+
+\begin{frame}{Average performance estimators}
+\begin{table}\centering
+\ra{1.3}
+\caption{Averaged performance estimators for daily and weekly frequencies}\label{tab:res}
+\begin{tabular}{@{}rrrcrr@{}}\toprule
+& \multicolumn{2}{c}{Daily} & \phantom{abc}& \multicolumn{2}{c}{Weekly}\\
+\cmidrule{2-3} \cmidrule{4-6}
+& \textit{sMAPE(\%)} & \textit{MSE} && \textit{sMAPE(\%)} & \textit{MSE} \\
+\midrule
+S-CNN & 59.70  & 0.006 && 81.45 & 0.010 \\
+ES-RNN & 13.72 & 560.580 && 7.96 & 323.021\\
+V-AR & 0.83 & 0.001 && 2.24 & 0.000\\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{frame}
+
+\section{Conclusions}
+
+\begin{frame}[allowframebreaks]{Conclusion and Key Findings}
+        \begin{itemize}
+            \item Explored the synergy between neural networks and traditional statistical models for forex forecasting.
+            \item ES-RNN and S-CNN were both outperformed by Vector Autoregression (V-AR).
+            \item Identified a positive bias issue in the ES-RNN due to an ineffective training loss function.
+            \item S-CNN struggled with non-stationary and insufficient data.
+            \item Emphasised the importance of ample data and the effectiveness of simpler, classic statistical methods.
+        \end{itemize}
+    \newpage
+    \begin{center}
+        \textsc{\textbf{Future Steps}}
+    \end{center}
+        \begin{itemize}
+            \item Explore alternative loss function, and input window, for ES-RNN to mitigate bias in predictions.
+            \item Train the ES-RNN with all the series to exploit shared parameters and learn common local trends among the series.
+            \item Address data non-stationarity and volume issues to enhance the performance of complex models.
+        \end{itemize}
 \end{frame}
 
 \begin{frame}[allowframebreaks]{References}
