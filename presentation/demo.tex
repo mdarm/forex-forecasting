@@ -486,14 +486,12 @@ V-AR & 0.83 & 0.001 && 2.24 & 0.000\\
             \item Explore alternative loss function, and input window, for ES-RNN to mitigate bias in predictions.
             \item Train the ES-RNN with all the series to exploit shared parameters and learn common local trends among the series.
             \item Address data non-stationarity and volume issues to enhance the performance of complex models.
+            \item Use the CNN to create embedings from the time series and feed to a transformer architecture.
         \end{itemize}
-\end{frame}
-
-\begin{frame}{Attempted but not realised}
-Transformer architecture based on Zeng et al. \cite{transformer}
-    \begin{figure}[htbp]
+CNN-Transformer architecture based on Zeng et al. \cite{transformer}
+\begin{figure}[htbp]
 \centering
-\def\svgwidth{0.6\columnwidth}
+\def\svgwidth{0.55\columnwidth}
 \includesvg{./plots/transformer.svg}
 %\includegraphics[width=\columnwidth]{./plots/s-cnn.jpg}
 \end{figure}
