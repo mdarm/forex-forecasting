@@ -15,7 +15,8 @@
 \usepgfplotslibrary{dateplot}
 
 \usepackage{xspace}
-\newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
+\newcommand{\themename}
+{\textbf{\textsc{metropolis}}\xspace}
 
 \title{Forex Forecasting}
 \subtitle{Combining forecasting methods with neural networks}
@@ -83,7 +84,7 @@
 \begin{frame}{Scenario: Forex Forecasting}
     \begin{itemize}
         \item Forex is the global marketplace for trading national currencies against one another, operating 24/5.
-        \item  Here, we'll use the European's Central Bank (ECB) dataset for various currencies against the euro
+        \item  Here, we'll use the European Central Bank's (ECBs) dataset for various currencies against the euro
     \end{itemize}
 \begin{table}[h]
 \centering
@@ -107,8 +108,6 @@
         \item \textbf{Data Frequency:} Daily data, resampling needed for other frequencies.
         \item \textbf{Currency Pairs:} Challenge in selecting relevant pairs.
         \item \textbf{Normalisation:} Essential for data comparability.
-        \item \textbf{Non-Trading Days:} Adjustments necessary for continuity.
-        \item \textbf{Time Zones:} ECB's CET time zone updates impact intra-day rates.
         \item \textbf{Institutional Bias:} ECB interventions can cause rate discrepancies.
     \end{itemize}
 
@@ -120,11 +119,11 @@ All series were adjusted to a fixed length, ensuring consistency for effective v
 \begin{itemize}
         \item Used forecasting methods to supplement a Convolutional Neural Network (S-CNN).
         \begin{itemize}
-            \item \textbf{Why?} To Address the non-linear nature of Forex data.
+            \item \textbf{Why?} To address the non-linear nature of Forex data.
         \end{itemize}
         \item Adopted a traditional forecasting method as the foundation, and enhanced it with a Recurrent Neural Network (ES-RNN).
         \begin{itemize}
-            \item \textbf{Why?} To Address the linear trend assumption of the forecasting method\cite{ayitey}.
+            \item \textbf{Why?} To address the linear trend assumption of the forecasting method\cite{ayitey}.
         \end{itemize}
 
 \begin{center}
@@ -488,6 +487,16 @@ V-AR & 0.83 & 0.001 && 2.24 & 0.000\\
             \item Train the ES-RNN with all the series to exploit shared parameters and learn common local trends among the series.
             \item Address data non-stationarity and volume issues to enhance the performance of complex models.
         \end{itemize}
+\end{frame}
+
+\begin{frame}{Attempted but not realised}
+Transformer architecture based on Zeng et al. \cite{transformer}
+    \begin{figure}[htbp]
+\centering
+\def\svgwidth{0.6\columnwidth}
+\includesvg{./plots/transformer.svg}
+%\includegraphics[width=\columnwidth]{./plots/s-cnn.jpg}
+\end{figure}
 \end{frame}
 
 \begin{frame}[allowframebreaks]{References}
